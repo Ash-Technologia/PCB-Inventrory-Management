@@ -10,6 +10,38 @@ import ProgressBar from '../components/common/ProgressBar';
 import Skeleton from '../components/common/Skeleton';
 import { useAuth } from '../context/AuthContext';
 
+// Modal Component - defined outside to prevent re-creation on every render
+const ModalOverlay = ({ children, onClose }) => {
+    const handleOverlayClick = (e) => {
+        if (e.target === e.currentTarget) {
+            onClose();
+        }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onMouseDown={handleOverlayClick}
+        >
+            <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto"
+                onClick={e => e.stopPropagation()}
+                onMouseDown={e => e.stopPropagation()}
+                onKeyDown={e => e.stopPropagation()}
+            >
+                {children}
+            </motion.div>
+        </motion.div>
+    );
+};
+
+
 const Inventory = () => {
     const { user } = useAuth();
     const isAdmin = user?.role === 'ADMIN';
@@ -38,10 +70,16 @@ const Inventory = () => {
         fetchComponents();
     }, []);
 
-    const fetchComponents = async () => {
+    const fetchComponents = async (refresh = false) => {
         try {
-            const response = await componentService.getAll({ search });
+            // If refreshing after add/edit/delete, temporarily clear search to show all components
+            const searchParam = refresh ? '' : search;
+            const response = await componentService.getAll({ search: searchParam });
             setComponents(response.data.data);
+            // If we refreshed, clear the search input too
+            if (refresh && search) {
+                setSearch('');
+            }
         } catch (error) {
             toast.error('Failed to load components');
         } finally {
@@ -121,7 +159,7 @@ const Inventory = () => {
                 toast.success('Component added successfully!');
             }
             setShowModal(false);
-            fetchComponents();
+            fetchComponents(true);
         } catch (error) {
             toast.error(isEditing ? 'Failed to update component' : 'Failed to add component');
         }
@@ -132,7 +170,7 @@ const Inventory = () => {
             try {
                 await componentService.delete(id);
                 toast.success('Component deleted successfully');
-                fetchComponents();
+                fetchComponents(true);
             } catch (error) {
                 toast.error('Failed to delete component');
             }
@@ -153,27 +191,6 @@ const Inventory = () => {
         { value: 'low', label: 'Low Stock', count: components.filter(c => c.stock_status === 'LOW').length },
         { value: 'normal', label: 'Normal', count: components.filter(c => c.stock_status === 'NORMAL' || c.stock_status === 'ADEQUATE').length },
     ];
-
-    // Modal Component
-    const ModalOverlay = ({ children, onClose }) => (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={onClose}
-        >
-            <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto"
-                onClick={e => e.stopPropagation()}
-            >
-                {children}
-            </motion.div>
-        </motion.div>
-    );
 
     if (loading) {
         return (
