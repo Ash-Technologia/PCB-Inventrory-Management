@@ -1,146 +1,5 @@
 const { query } = require('../config/database');
 
-// Get consumption summary by component
-const getConsumptionSummary = async (req, res, next) => {
-    try {
-        const { start_date, end_date, limit = 20 } = req.query;
-
-        let queryText = `
-      SELECT 
-        c.id,
-        c.component_name,
-        c.part_number,
-        c.category,
-        c.current_stock,
-        c.monthly_required_quantity,
-        COALESCE(SUM(ch.quantity_consumed), 0) as total_consumed,
-        COUNT(DISTINCT ch.production_entry_id) as production_count,
-        COALESCE(SUM(ch.quantity_consumed * c.unit_price), 0) as total_cost
-      FROM components c
-      LEFT JOIN consumption_history ch ON c.id = ch.component_id
-    `;
-
-        const params = [];
-        let paramCount = 0;
-
-        if (start_date || end_date) {
-            queryText += ' WHERE 1=1';
-
-            if (start_date) {
-                paramCount++;
-                queryText += ` AND ch.consumed_at >= $${paramCount}`;
-                params.push(start_date);
-            }
-
-            if (end_date) {
-                paramCount++;
-                queryText += ` AND ch.consumed_at <= $${paramCount}`;
-                params.push(end_date);
-            }
-        }
-
-        queryText += `
-      GROUP BY c.id, c.component_name, c.part_number, c.category, c.current_stock, c.monthly_required_quantity
-      ORDER BY total_consumed DESC
-      LIMIT $${paramCount + 1}
-    `;
-        params.push(limit);
-
-        const result = await query(queryText, params);
-
-        res.json({
-            success: true,
-            data: result.rows.map(row => ({
-                ...row,
-                total_consumed: parseInt(row.total_consumed),
-                production_count: parseInt(row.production_count),
-                total_cost: parseFloat(parseFloat(row.total_cost).toFixed(2)),
-            })),
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// Get top consumed components
-const getTopConsumed = async (req, res, next) => {
-    try {
-        const { limit = 10, days = 30 } = req.query;
-
-        const result = await query(
-            `SELECT 
-        c.id,
-        c.component_name,
-        c.part_number,
-        c.category,
-        c.current_stock,
-        SUM(ch.quantity_consumed) as total_consumed,
-        COUNT(DISTINCT ch.production_entry_id) as times_used,
-        (c.current_stock::float / NULLIF(SUM(ch.quantity_consumed), 0) * $2) as days_of_stock_remaining
-       FROM components c
-       JOIN consumption_history ch ON c.id = ch.component_id
-       WHERE ch.consumed_at >= NOW() - INTERVAL '${days} days'
-       GROUP BY c.id, c.component_name, c.part_number, c.category, c.current_stock
-       ORDER BY total_consumed DESC
-       LIMIT $1`,
-            [limit, days]
-        );
-
-        res.json({
-            success: true,
-            data: result.rows.map(row => ({
-                ...row,
-                total_consumed: parseInt(row.total_consumed),
-                times_used: parseInt(row.times_used),
-                days_of_stock_remaining: row.days_of_stock_remaining ? parseFloat(row.days_of_stock_remaining.toFixed(1)) : null,
-            })),
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// Get consumption trends over time
-const getConsumptionTrends = async (req, res, next) => {
-    try {
-        const { component_id, days = 30 } = req.query;
-
-        let queryText = `
-      SELECT 
-        DATE(ch.consumed_at) as date,
-        c.component_name,
-        c.part_number,
-        SUM(ch.quantity_consumed) as daily_consumption
-      FROM consumption_history ch
-      JOIN components c ON ch.component_id = c.id
-      WHERE ch.consumed_at >= NOW() - INTERVAL '${days} days'
-    `;
-
-        const params = [];
-        if (component_id) {
-            queryText += ` AND ch.component_id = $1`;
-            params.push(component_id);
-        }
-
-        queryText += `
-      GROUP BY DATE(ch.consumed_at), c.component_name, c.part_number
-      ORDER BY date ASC
-    `;
-
-        const result = await query(queryText, params);
-
-        res.json({
-            success: true,
-            data: result.rows.map(row => ({
-                ...row,
-                daily_consumption: parseInt(row.daily_consumption),
-            })),
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
 // Get dashboard statistics (USP #4: Consumption Intelligence Dashboard)
 const getDashboardStats = async (req, res, next) => {
     try {
@@ -196,41 +55,30 @@ const getDashboardStats = async (req, res, next) => {
         );
         const consumptionThisMonth = parseInt(consumptionThisMonthResult.rows[0].total_consumed);
 
-        // USP #8: Consumption Anomaly Detector
-        const anomalyResult = await query(
-            `WITH daily_consumption AS (
-        SELECT 
-          DATE(consumed_at) as date,
-          SUM(quantity_consumed) as daily_total
-        FROM consumption_history
-        WHERE consumed_at >= NOW() - INTERVAL '14 days'
-        GROUP BY DATE(consumed_at)
-      ),
-      stats AS (
-        SELECT 
-          AVG(daily_total) as avg_consumption,
-          STDDEV(daily_total) as stddev_consumption
-        FROM daily_consumption
-      ),
-      today AS (
-        SELECT COALESCE(SUM(quantity_consumed), 0) as today_total
-        FROM consumption_history
-        WHERE DATE(consumed_at) = CURRENT_DATE
-      )
-      SELECT 
-        today.today_total,
-        stats.avg_consumption,
-        CASE 
-          WHEN today.today_total > (stats.avg_consumption + 2 * COALESCE(stats.stddev_consumption, 0)) THEN true
-          ELSE false
-        END as is_anomaly
-      FROM today, stats`
+        // USP #8: Consumption Anomaly Detector (Real Data Logic)
+        const todayConsumptionResult = await query(
+            `SELECT COALESCE(SUM(quantity_consumed), 0) as today_consumed
+             FROM consumption_history
+             WHERE consumed_at >= DATE_TRUNC('day', CURRENT_DATE)`
         );
+        const todayConsumption = parseInt(todayConsumptionResult.rows[0].today_consumed);
+
+        const avgConsumptionResult = await query(
+            `SELECT COALESCE(AVG(daily_total), 0) as avg_daily
+             FROM (
+                 SELECT DATE(consumed_at) as day, SUM(quantity_consumed) as daily_total
+                 FROM consumption_history
+                 WHERE consumed_at >= CURRENT_DATE - INTERVAL '30 days'
+                 AND consumed_at < DATE_TRUNC('day', CURRENT_DATE)
+                 GROUP BY DATE(consumed_at)
+             ) as daily_stats`
+        );
+        const avgConsumption = parseFloat(parseFloat(avgConsumptionResult.rows[0].avg_daily).toFixed(2));
 
         const anomalyDetection = {
-            today_consumption: parseInt(anomalyResult.rows[0]?.today_total || 0),
-            average_consumption: parseFloat(parseFloat(anomalyResult.rows[0]?.avg_consumption || 0).toFixed(2)),
-            is_anomaly: anomalyResult.rows[0]?.is_anomaly || false,
+            today_consumption: todayConsumption,
+            average_consumption: avgConsumption,
+            is_anomaly: todayConsumption > (avgConsumption * 1.5) && avgConsumption > 0, // Flag if 50% higher than average
         };
 
         res.json({
@@ -252,39 +100,72 @@ const getDashboardStats = async (req, res, next) => {
     }
 };
 
-// Get category-wise distribution
-const getCategoryDistribution = async (req, res, next) => {
+const getConsumptionSummary = async (req, res, next) => {
     try {
-        const result = await query(
-            `SELECT 
-        category,
-        COUNT(*) as component_count,
-        SUM(current_stock) as total_stock,
-        SUM(current_stock * unit_price) as total_value
-       FROM components
-       WHERE category IS NOT NULL
-       GROUP BY category
-       ORDER BY component_count DESC`
-        );
+        const result = await query(`
+            SELECT 
+                COUNT(*) as total_entries, 
+                COUNT(DISTINCT component_id) as distinct_components,
+                COALESCE(SUM(quantity_consumed), 0) as total_units
+            FROM consumption_history
+        `);
 
+        const data = result.rows[0];
         res.json({
             success: true,
-            data: result.rows.map(row => ({
-                ...row,
-                component_count: parseInt(row.component_count),
-                total_stock: parseInt(row.total_stock),
-                total_value: parseFloat(parseFloat(row.total_value).toFixed(2)),
-            })),
+            data: {
+                total: parseInt(data.total_units),
+                distinct_components: parseInt(data.distinct_components),
+                total_entries: parseInt(data.total_entries)
+            }
         });
-    } catch (error) {
-        next(error);
-    }
+    } catch (error) { next(error); }
+};
+
+const getTopConsumed = async (req, res, next) => {
+    try {
+        const result = await query(`
+            SELECT c.component_name, SUM(ch.quantity_consumed) as total_consumed
+            FROM consumption_history ch
+            JOIN components c ON ch.component_id = c.id
+            GROUP BY c.component_name, c.id
+            ORDER BY total_consumed DESC
+            LIMIT 5
+        `);
+        res.json({ success: true, data: result.rows });
+    } catch (error) { next(error); }
+};
+
+const getConsumptionTrends = async (req, res, next) => {
+    try {
+        const result = await query(`
+            SELECT TO_CHAR(consumed_at, 'YYYY-MM-DD') as date, SUM(quantity_consumed) as total
+            FROM consumption_history
+            WHERE consumed_at >= CURRENT_DATE - INTERVAL '7 days'
+            GROUP BY TO_CHAR(consumed_at, 'YYYY-MM-DD')
+            ORDER BY date ASC
+        `);
+        res.json({ success: true, data: result.rows });
+    } catch (error) { next(error); }
+};
+
+const getCategoryDistribution = async (req, res, next) => {
+    try {
+        const result = await query(`
+            SELECT category, COUNT(*) as count
+            FROM components
+            WHERE category IS NOT NULL
+            GROUP BY category
+            ORDER BY count DESC
+        `);
+        res.json({ success: true, data: result.rows });
+    } catch (error) { next(error); }
 };
 
 module.exports = {
+    getDashboardStats,
     getConsumptionSummary,
     getTopConsumed,
     getConsumptionTrends,
-    getDashboardStats,
     getCategoryDistribution,
 };

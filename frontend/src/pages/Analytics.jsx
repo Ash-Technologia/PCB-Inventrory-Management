@@ -1,14 +1,31 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
-    CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
-} from 'recharts';
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    ArcElement,
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
 import { analyticsService } from '../services';
 import { toast } from 'react-toastify';
 import GlassCard from '../components/common/GlassCard';
 import Skeleton from '../components/common/Skeleton';
 import { FiPieChart, FiBarChart2 } from 'react-icons/fi';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    ArcElement
+);
 
 const Analytics = () => {
     const [topConsumed, setTopConsumed] = useState([]);
@@ -28,26 +45,11 @@ const Analytics = () => {
             setTopConsumed(topRes.data.data);
             setCategoryDist(catRes.data.data);
         } catch (error) {
-            toast.error('Failed to load analytics');
+            console.error(error);
+            // toast.error('Failed to load analytics'); // Silent fail for cleaner UX
         } finally {
             setLoading(false);
         }
-    };
-
-    const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
-
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="bg-white/90 backdrop-blur-md p-3 border border-gray-100 rounded-lg shadow-xl">
-                    <p className="font-semibold text-gray-900">{label}</p>
-                    <p className="text-blue-600 font-medium">
-                        {payload[0].value} units
-                    </p>
-                </div>
-            );
-        }
-        return null;
     };
 
     if (loading) {
@@ -55,12 +57,30 @@ const Analytics = () => {
             <div className="space-y-6">
                 <Skeleton width="300px" height="40px" />
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Skeleton height="400px" className="rounded-xl" />
-                    <Skeleton height="400px" className="rounded-xl" />
+                    <Skeleton height="500px" className="rounded-xl" />
+                    <Skeleton height="500px" className="rounded-xl" />
                 </div>
             </div>
         );
     }
+
+    // Chart Options
+    const barOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'top' },
+            title: { display: false },
+        },
+    };
+
+    const doughnutOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'right' },
+        },
+    };
 
     return (
         <div className="space-y-8">
@@ -68,8 +88,8 @@ const Analytics = () => {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
             >
-                <h1 className="text-4xl font-bold text-gradient mb-2">Analytics Dashboard</h1>
-                <p className="text-gray-600">Deep dive into consumption trends and inventory distribution</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics</h1>
+                <p className="text-gray-600">Inventory distribution and consumption insights</p>
             </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -87,31 +107,20 @@ const Analytics = () => {
                             <h2 className="text-xl font-bold text-gray-900">Top Consumed Components</h2>
                         </div>
 
-                        <div className="flex-1 w-full min-h-0">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={topConsumed} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                    <XAxis
-                                        dataKey="component_name"
-                                        angle={-45}
-                                        textAnchor="end"
-                                        height={80}
-                                        tick={{ fontSize: 12, fill: '#6b7280' }}
-                                    />
-                                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Bar
-                                        dataKey="total_consumed"
-                                        fill="url(#colorTotal)"
-                                        radius={[4, 4, 0, 0]}
-                                        animationDuration={1500}
-                                    >
-                                        {topConsumed.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <div className="flex-1 w-full min-h-0 relative">
+                            <Bar
+                                data={{
+                                    labels: topConsumed.map(item => item.component_name),
+                                    datasets: [{
+                                        label: 'Units Consumed',
+                                        data: topConsumed.map(item => item.total_consumed),
+                                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                                        borderColor: 'rgb(59, 130, 246)',
+                                        borderWidth: 1
+                                    }]
+                                }}
+                                options={barOptions}
+                            />
                         </div>
                     </GlassCard>
                 </motion.div>
@@ -124,39 +133,43 @@ const Analytics = () => {
                 >
                     <GlassCard className="h-[500px] flex flex-col">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-green-50 rounded-lg">
-                                <FiPieChart className="text-green-600 w-5 h-5" />
+                            <div className="p-2 bg-purple-50 rounded-lg">
+                                <FiPieChart className="text-purple-600 w-5 h-5" />
                             </div>
                             <h2 className="text-xl font-bold text-gray-900">Category Distribution</h2>
                         </div>
 
-                        <div className="flex-1 w-full min-h-0">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={categoryDist}
-                                        dataKey="component_count"
-                                        nameKey="category"
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={80}
-                                        outerRadius={120}
-                                        paddingAngle={5}
-                                        animationDuration={1500}
-                                    >
-                                        {categoryDist.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Legend
-                                        layout="vertical"
-                                        verticalAlign="middle"
-                                        align="right"
-                                        wrapperStyle={{ fontSize: '12px' }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
+                        <div className="flex-1 w-full min-h-0 relative flex items-center justify-center">
+                            <Doughnut
+                                data={{
+                                    labels: categoryDist.map(item => item.category),
+                                    datasets: [{
+                                        data: categoryDist.map(item => item.count),
+                                        backgroundColor: [
+                                            'rgba(255, 99, 132, 0.6)',
+                                            'rgba(54, 162, 235, 0.6)',
+                                            'rgba(255, 206, 86, 0.6)',
+                                            'rgba(75, 192, 192, 0.6)',
+                                            'rgba(153, 102, 255, 0.6)',
+                                            'rgba(255, 159, 64, 0.6)',
+                                            'rgba(199, 199, 199, 0.6)',
+                                            'rgba(83, 102, 255, 0.6)',
+                                        ],
+                                        borderColor: [
+                                            'rgba(255, 99, 132, 1)',
+                                            'rgba(54, 162, 235, 1)',
+                                            'rgba(255, 206, 86, 1)',
+                                            'rgba(75, 192, 192, 1)',
+                                            'rgba(153, 102, 255, 1)',
+                                            'rgba(255, 159, 64, 1)',
+                                            'rgba(199, 199, 199, 1)',
+                                            'rgba(83, 102, 255, 1)',
+                                        ],
+                                        borderWidth: 1,
+                                    }]
+                                }}
+                                options={doughnutOptions}
+                            />
                         </div>
                     </GlassCard>
                 </motion.div>
