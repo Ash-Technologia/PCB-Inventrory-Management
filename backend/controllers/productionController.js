@@ -1,8 +1,49 @@
+/**
+ * PRODUCTION CONTROLLER - Core Production Entry Management
+ * ========================================================
+ * 
+ * MVP FEATURE #3: Atomic Stock Deduction (Production Entry)
+ * - Transaction-safe production logging with automatic stock deduction
+ * - Validates stock availability before production
+ * - Deducts stock for all components atomically (all-or-nothing)
+ * - Creates consumption history for audit trail
+ * - Triggers procurement alerts when stock is low
+ * 
+ * USP #1: Zero-Negative Guarantee System
+ * - Database CHECK constraint prevents negative stock (schema.sql line 36)
+ * - Pre-validation checks stock availability before deduction (lines 32-59)
+ * - Atomic transactions ensure consistency (lines 13, 143, 156)
+ * 
+ * USP #7: Transaction-Safe Engine (Bank-grade ACID Compliance)
+ * - BEGIN transaction (line 13)
+ * - All operations in single transaction (lines 13-143)
+ * - COMMIT on success (line 143) or ROLLBACK on failure (line 156)
+ * - This ensures ALL components deduct or NONE do (atomicity)
+ * 
+ * USP #2: Smart Procurement Intelligence
+ * - Automatically creates procurement triggers when stock < 20% (lines 107-139)
+ * - Calculates priority based on stock percentage (lines 123-128)
+ * - Recommends 2 months supply for reorder (line 130)
+ * 
+ * USP #4: Enterprise Audit Trail
+ * - Logs every stock change in consumption_history table (lines 90-96)
+ * - Tracks: component_id, production_entry_id, quantity_consumed
+ * - Records: stock_before, stock_after, timestamp
+ * - Immutable audit trail for compliance
+ * 
+ * KEY FUNCTIONS:
+ * 1. createProductionEntry() - Main production entry with atomic stock deduction
+ * 2. getAllProductionEntries() - Get production history with filters
+ * 3. getProductionEntryById() - Get single entry with consumption details
+ * 4. getProductionPreview() - Preview stock impact before production
+ * 5. deleteProductionEntry() - Revert production and restore stock (Admin only)
+ */
+
 const { query, getClient } = require('../config/database');
 
 // Create production entry with atomic stock deduction
 // USP #1: Zero-Negative Guarantee System
-// USP #6: Atomic Transaction Safety
+// USP #7: Transaction-Safe Engine (Bank-grade ACID)
 const createProductionEntry = async (req, res, next) => {
     const client = await getClient();
 

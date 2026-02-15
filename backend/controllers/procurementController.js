@@ -1,6 +1,53 @@
+/**
+ * PROCUREMENT CONTROLLER - Smart Procurement Intelligence
+ * ========================================================
+ * 
+ * MVP FEATURE #4: Procurement Triggers (Automated Alerts)
+ * - Automatic low-stock alerts with predictive analytics
+ * - Priority-based trigger system (CRITICAL/HIGH/MEDIUM/LOW)
+ * - Recommended order quantities based on consumption patterns
+ * - Days until stockout prediction
+ * - Status tracking (PENDING/ORDERED/FULFILLED)
+ * 
+ * USP #2: Smart Procurement Intelligence
+ * - Automatic trigger creation when stock < 20% of monthly requirement
+ * - Priority calculation based on stock percentage:
+ *   * CRITICAL: < 10% of monthly requirement
+ *   * HIGH: < 15% of monthly requirement
+ *   * MEDIUM: < 20% of monthly requirement
+ *   * LOW: >= 20% of monthly requirement
+ * - Recommended order quantity = 2 months supply - current stock (line 146)
+ * - Prevents duplicate triggers for same component (lines 117-122)
+ * 
+ * USP #8: Predictive Analytics
+ * - Calculates average daily consumption from last 30 days (lines 46-57)
+ * - Predicts days until stockout = current_stock / avg_daily_consumption (lines 58-60)
+ * - Estimated cost calculation = recommended_qty * unit_price (line 64)
+ * - Stock percentage for visual indicators (line 67)
+ * 
+ * KEY FUNCTIONS:
+ * 1. getAllTriggers() - Get all procurement triggers with predictions
+ * 2. updateTriggerStatus() - Update trigger status (PENDING → ORDERED → FULFILLED)
+ * 3. createTrigger() - Create manual procurement trigger
+ * 4. getProcurementSummary() - Summary by status and priority
+ * 
+ * AUTOMATIC TRIGGER CREATION:
+ * - Triggered during production entry (productionController.js lines 107-139)
+ * - Checks stock level after deduction
+ * - Creates trigger if stock < 20% of monthly requirement
+ * - Calculates priority and recommended order quantity
+ * 
+ * PREDICTIVE ANALYTICS LOGIC:
+ * - Gets consumption history for last 30 days (lines 46-53)
+ * - Calculates: total_consumed, days_active (distinct days with consumption)
+ * - Average daily consumption = total_consumed / days_active (line 57)
+ * - Days until stockout = current_stock / avg_daily_consumption (lines 58-60)
+ * - Returns 999 if no consumption history (prevents division by zero)
+ */
+
 const { query } = require('../config/database');
 
-// Get all procurement triggers
+// Get all procurement triggers with predictive analytics
 const getAllTriggers = async (req, res, next) => {
     try {
         const { status = 'PENDING', priority } = req.query;

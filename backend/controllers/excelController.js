@@ -1,9 +1,60 @@
+/**
+ * EXCEL CONTROLLER - Bidirectional Excel Integration
+ * ===================================================
+ * 
+ * MVP FEATURE #6: Excel Integration
+ * - Bidirectional import/export with fail-safe validation
+ * - Download Excel template for easy data entry
+ * - Import components from Excel with pre-validation
+ * - Export current inventory to Excel
+ * - Export consumption reports to Excel
+ * 
+ * USP #5: Fail-Safe Excel Import Validator
+ * - Pre-validation BEFORE database insertion (lines 30-91)
+ * - Validates required fields: component_name, part_number, current_stock, monthly_required_quantity
+ * - Validates data types: numbers must be numeric, stock must be non-negative
+ * - Checks for duplicate part numbers in file (lines 93-104)
+ * - Returns detailed error report WITHOUT importing if validation fails
+ * - Atomic import with transaction safety (lines 106-158)
+ * - Handles unique constraint violations gracefully (skips duplicates)
+ * 
+ * KEY FUNCTIONS:
+ * 1. importComponents() - Import components from Excel with fail-safe validation
+ * 2. exportInventory() - Export current inventory to Excel
+ * 3. exportConsumption() - Export consumption report to Excel
+ * 4. downloadTemplate() - Download Excel template with sample data
+ * 
+ * IMPORT VALIDATION PROCESS:
+ * 1. Read Excel file using xlsx library (lines 17-20)
+ * 2. Validate each row for required fields (lines 38-47)
+ * 3. Validate data types and ranges (lines 49-61)
+ * 4. Collect all validation errors (lines 62-79)
+ * 5. Return errors WITHOUT importing if any validation fails (lines 82-90)
+ * 6. Check for duplicate part numbers in file (lines 93-104)
+ * 7. Import valid components in atomic transaction (lines 106-158)
+ * 8. Handle database unique constraint violations (lines 126-133)
+ * 9. Return summary: imported_count, skipped_count, details (lines 142-150)
+ * 
+ * EXPORT FEATURES:
+ * - Inventory export includes: stock levels, value, status (LOW STOCK/ADEQUATE)
+ * - Consumption export includes: component usage, production count, date range
+ * - Custom column widths for readability (lines 204-215, 287-295)
+ * - Formatted data with calculated fields (stock %, total value)
+ * 
+ * TEMPLATE DOWNLOAD:
+ * - Provides sample data for reference (lines 312-331)
+ * - Shows correct format for all fields
+ * - Includes examples of different component types
+ */
+
 const xlsx = require('xlsx');
 const path = require('path');
 const fs = require('fs');
 const { query, getClient } = require('../config/database');
 
-// Import components from Excel (USP #5 & #10: Excel-First Philosophy + Fail-Safe Validator)
+// Import components from Excel
+// USP #5: Fail-Safe Excel Import Validator
+// Pre-validates all data before database insertion
 const importComponents = async (req, res, next) => {
     try {
         if (!req.file) {

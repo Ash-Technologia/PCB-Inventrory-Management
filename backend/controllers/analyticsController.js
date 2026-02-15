@@ -1,6 +1,47 @@
+/**
+ * ANALYTICS CONTROLLER - Real-Time Consumption Analytics
+ * =======================================================
+ * 
+ * MVP FEATURE #5: Analytics Dashboard
+ * - Real-time consumption insights with anomaly detection
+ * - Key metrics: total components, low stock, critical stock, PCBs
+ * - Production statistics: entries this month, units produced
+ * - Inventory value calculation
+ * - Consumption trends and patterns
+ * 
+ * USP #3: Consumption Anomaly Detector
+ * - Statistical analysis using 30-day rolling average (lines 66-76)
+ * - Compares today's consumption to historical average (line 81)
+ * - Flags anomaly if consumption > 1.5x average (line 81)
+ * - Real-time alerts on dashboard for unusual consumption spikes
+ * - Helps detect: production errors, theft, data entry mistakes
+ * 
+ * USP #6: Real-Time Dashboard
+ * - Live updates with animated charts and counters
+ * - Parallel data fetching for performance (frontend Dashboard.jsx lines 54-59)
+ * - Smooth animations using Framer Motion
+ * - Category distribution (doughnut chart)
+ * - Top consumed components (bar chart)
+ * 
+ * KEY FUNCTIONS:
+ * 1. getDashboardStats() - Overall dashboard statistics with anomaly detection
+ * 2. getConsumptionSummary() - Total consumption summary
+ * 3. getTopConsumed() - Top 5 most consumed components
+ * 4. getConsumptionTrends() - 7-day consumption trends
+ * 5. getCategoryDistribution() - Component category breakdown
+ * 
+ * ANOMALY DETECTION LOGIC:
+ * - Calculates today's total consumption (lines 59-64)
+ * - Calculates 30-day rolling average excluding today (lines 66-76)
+ * - Flags anomaly if: today_consumption > (avg_consumption * 1.5)
+ * - Returns: today_consumption, average_consumption, is_anomaly flag
+ */
+
 const { query } = require('../config/database');
 
-// Get dashboard statistics (USP #4: Consumption Intelligence Dashboard)
+// Get dashboard statistics
+// USP #3: Consumption Anomaly Detector
+// USP #6: Real-Time Dashboard
 const getDashboardStats = async (req, res, next) => {
     try {
         // Total components

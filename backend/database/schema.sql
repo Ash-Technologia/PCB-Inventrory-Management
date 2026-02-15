@@ -1,5 +1,126 @@
--- PCB Inventory Management System - Database Schema
--- INVICTUS Hackathon - Electrolyte Solutions
+-- ============================================================================
+-- PCB INVENTORY MANAGEMENT SYSTEM - DATABASE SCHEMA
+-- ============================================================================
+-- INVICTUS Hackathon - Electrolyte Solutions Challenge
+-- 
+-- DATABASE ARCHITECTURE OVERVIEW:
+-- This schema implements a 7-table relational database with ACID compliance
+-- for production-ready inventory management with enterprise-grade data integrity.
+-- 
+-- ============================================================================
+-- MVP FEATURES IMPLEMENTED AT DATABASE LEVEL:
+-- ============================================================================
+-- 
+-- MVP #1: Component Inventory Management
+--   - `components` table with comprehensive fields
+--   - Unique constraint on part_number for data integrity
+--   - Automatic timestamp tracking (created_at, updated_at)
+-- 
+-- MVP #2: PCB-Component Mapping (Bill of Materials)
+--   - `pcb_components` junction table for many-to-many relationship
+--   - Composite unique constraint (pcb_id, component_id) prevents duplicates
+--   - Cascading deletes maintain referential integrity
+-- 
+-- MVP #3: Atomic Stock Deduction (Production Entry)
+--   - `production_entries` table logs all production activities
+--   - Foreign key to users table for audit trail (who created entry)
+--   - CHECK constraint ensures quantity_produced > 0
+-- 
+-- MVP #4: Procurement Triggers (Automated Alerts)
+--   - `procurement_triggers` table with status workflow (PENDING → ORDERED → FULFILLED)
+--   - Priority levels (LOW, MEDIUM, HIGH, CRITICAL) with CHECK constraint
+--   - Recommended order quantity calculation
+-- 
+-- MVP #5: Analytics Dashboard
+--   - `consumption_history` table provides complete audit trail
+--   - Indexed columns for fast analytics queries
+--   - Timestamp tracking for trend analysis
+-- 
+-- ============================================================================
+-- USP FEATURES IMPLEMENTED AT DATABASE LEVEL:
+-- ============================================================================
+-- 
+-- USP #1: Zero-Negative Guarantee System
+--   - CHECK constraint on components.current_stock >= 0 (line 36)
+--   - Prevents negative inventory at database level
+--   - Combined with application-level validation for double protection
+-- 
+-- USP #4: Enterprise Audit Trail
+--   - `consumption_history` table tracks every stock change
+--   - Records: stock_before, stock_after, quantity_consumed, timestamp
+--   - Immutable audit trail for compliance and forensics
+--   - Links to production_entry_id and component_id for full traceability
+-- 
+-- USP #7: Transaction-Safe Engine (Bank-grade ACID Compliance)
+--   - PostgreSQL's ACID properties ensure data consistency
+--   - Foreign key constraints maintain referential integrity
+--   - Cascading deletes prevent orphaned records
+--   - Atomic transactions in application layer (BEGIN...COMMIT/ROLLBACK)
+-- 
+-- ============================================================================
+-- PERFORMANCE OPTIMIZATIONS:
+-- ============================================================================
+-- 
+-- Indexes for Fast Queries:
+--   - idx_components_stock: Fast low-stock queries
+--   - idx_components_part_number: Fast component lookups
+--   - idx_production_date: Fast date-range queries for analytics
+--   - idx_production_pcb: Fast PCB-specific production history
+--   - idx_consumption_component: Fast component consumption history
+--   - idx_consumption_production: Fast production entry details
+--   - idx_procurement_status: Fast pending trigger queries
+--   - idx_procurement_component: Fast component-specific triggers
+-- 
+-- Automatic Timestamp Updates:
+--   - Trigger function update_updated_at_column() (lines 111-117)
+--   - Automatically updates updated_at on every UPDATE operation
+--   - Applied to users, components, and pcbs tables
+-- 
+-- ============================================================================
+-- DATA INTEGRITY FEATURES:
+-- ============================================================================
+-- 
+-- 1. Foreign Key Constraints:
+--    - All relationships enforced at database level
+--    - Prevents orphaned records
+--    - Cascading deletes maintain consistency
+-- 
+-- 2. CHECK Constraints:
+--    - current_stock >= 0 (Zero-Negative Guarantee)
+--    - monthly_required_quantity > 0 (Must have requirement)
+--    - quantity_per_pcb > 0 (BOM must have positive quantities)
+--    - quantity_produced > 0 (Production must be positive)
+--    - quantity_consumed > 0 (Consumption must be positive)
+--    - status IN ('PENDING', 'ORDERED', 'FULFILLED')
+--    - priority IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')
+-- 
+-- 3. UNIQUE Constraints:
+--    - users.username (prevent duplicate usernames)
+--    - users.email (prevent duplicate emails)
+--    - components.part_number (prevent duplicate part numbers)
+--    - pcbs.pcb_code (prevent duplicate PCB codes)
+--    - pcb_components(pcb_id, component_id) (prevent duplicate BOM entries)
+-- 
+-- 4. NOT NULL Constraints:
+--    - All critical fields are NOT NULL
+--    - Ensures data completeness
+-- 
+-- ============================================================================
+-- TABLE RELATIONSHIPS:
+-- ============================================================================
+-- 
+-- users (1) ─────────────────────> (N) production_entries
+--                                         │
+-- pcbs (1) ──────────────────────────────┤
+--   │                                     │
+--   │                                     ▼
+--   └──> (N) pcb_components (N) <──── components (1)
+--                                         │
+--                                         ├──> (N) consumption_history
+--                                         │
+--                                         └──> (N) procurement_triggers
+-- 
+-- ============================================================================
 
 -- Drop existing tables if they exist (for clean setup)
 DROP TABLE IF EXISTS consumption_history CASCADE;
