@@ -89,9 +89,7 @@ const Inventory = () => {
 
     useEffect(() => {
         const debounce = setTimeout(() => {
-            if (search || filter !== 'all') {
-                fetchComponents();
-            }
+            fetchComponents();
         }, 300);
         return () => clearTimeout(debounce);
     }, [search]);
