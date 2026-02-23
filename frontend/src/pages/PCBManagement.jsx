@@ -89,15 +89,16 @@ const PCBManagement = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={onClose}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
             <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto"
-                onClick={e => e.stopPropagation()}
+                initial={{ scale: 0.92, opacity: 0, y: 16 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.92, opacity: 0, y: 16 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800"
+                onMouseDown={(e) => e.stopPropagation()}
             >
                 {children}
             </motion.div>
@@ -113,19 +114,17 @@ const PCBManagement = () => {
     }
 
     return (
-        <div className="space-y-8 relative">
-            <div className="flex justify-between items-center">
+        <div className="space-y-6 relative">
+            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-4xl font-bold text-gradient">PCB Designs</h1>
-                    <p className="text-gray-600 mt-1">Manage your board layouts and BOMs</p>
+                    <p className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-1">Designs</p>
+                    <h1 className="text-2xl font-black text-slate-900 dark:text-white">PCB Designs</h1>
+                    <p className="text-sm text-slate-400 mt-1">Manage board layouts and bill of materials</p>
                 </div>
-                <AnimatedButton
-                    icon={<FiPlus />}
-                    onClick={() => setShowCreateModal(true)}
-                >
+                <AnimatedButton icon={<FiPlus />} onClick={() => setShowCreateModal(true)} size="sm">
                     Create PCB
                 </AnimatedButton>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {pcbs.map((pcb, index) => (
@@ -141,37 +140,36 @@ const PCBManagement = () => {
                             className="h-full cursor-pointer relative group"
                             onClick={() => handleViewBOM(pcb)}
                         >
-                            {/* Admin Controls */}
                             {isAdmin && (
                                 <button
                                     onClick={(e) => handleDelete(pcb.id, e)}
-                                    className="absolute top-4 right-4 p-2 bg-red-100 text-red-600 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-10 hover:bg-red-200"
+                                    className="absolute top-4 right-4 p-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-10 hover:bg-red-100 dark:hover:bg-red-900/50"
                                     title="Delete PCB"
                                 >
-                                    <FiTrash2 size={18} />
+                                    <FiTrash2 size={14} />
                                 </button>
                             )}
 
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="p-3 bg-blue-100 rounded-xl text-blue-600">
-                                    <FiLayers className="w-8 h-8" />
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2.5 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-600 dark:text-purple-400">
+                                    <FiLayers className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-900">{pcb.pcb_name}</h3>
-                                    <p className="text-sm text-gray-500">{pcb.pcb_code}</p>
+                                    <h3 className="font-bold text-slate-900 dark:text-white text-sm">{pcb.pcb_name}</h3>
+                                    <p className="text-xs text-slate-400">{pcb.pcb_code}</p>
                                 </div>
                             </div>
 
-                            <p className="text-gray-600 mb-6 line-clamp-2 min-h-[40px]">
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 min-h-[36px]">
                                 {pcb.description || 'No description provided.'}
                             </p>
 
-                            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center gap-2 text-xs text-slate-500">
                                     <FiCpu />
                                     <span>{pcb.component_count || 0} Components</span>
                                 </div>
-                                <Badge variant="info" size="sm">Active</Badge>
+                                <Badge color="blue" size="xs">Active</Badge>
                             </div>
                         </GlassCard>
                     </motion.div>
@@ -183,52 +181,41 @@ const PCBManagement = () => {
                 {showCreateModal && (
                     <ModalOverlay onClose={() => setShowCreateModal(false)}>
                         <div className="p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900">Create New PCB</h2>
-                                <button onClick={() => setShowCreateModal(false)}><FiX size={24} /></button>
+                            <div className="flex justify-between items-center mb-5">
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Create New PCB</h2>
+                                    <p className="text-xs text-slate-400">Add a new PCB design to the system</p>
+                                </div>
+                                <button onClick={() => setShowCreateModal(false)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"><FiX /></button>
                             </div>
                             <form onSubmit={handleCreateSubmit} className="space-y-4">
+                                {[
+                                    { label: 'PCB Name *', key: 'pcb_name', type: 'text' },
+                                    { label: 'PCB Code *', key: 'pcb_code', type: 'text' },
+                                ].map(f => (
+                                    <div key={f.key}>
+                                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">{f.label}</label>
+                                        <input
+                                            type={f.type}
+                                            required
+                                            className="input-field"
+                                            value={formData[f.key]}
+                                            onChange={e => setFormData({ ...formData, [f.key]: e.target.value })}
+                                        />
+                                    </div>
+                                ))}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">PCB Name</label>
-                                    <input
-                                        type="text" required
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                        value={formData.pcb_name}
-                                        onChange={e => setFormData({ ...formData, pcb_name: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">PCB Code</label>
-                                    <input
-                                        type="text" required
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                        value={formData.pcb_code}
-                                        onChange={e => setFormData({ ...formData, pcb_code: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Description</label>
                                     <textarea
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="input-field resize-none"
                                         rows="3"
                                         value={formData.description}
                                         onChange={e => setFormData({ ...formData, description: e.target.value })}
                                     />
                                 </div>
-                                <div className="flex justify-end gap-3 mt-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowCreateModal(false)}
-                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                    >
-                                        Create PCB
-                                    </button>
+                                <div className="flex gap-3 pt-2">
+                                    <AnimatedButton type="button" variant="secondary" onClick={() => setShowCreateModal(false)} className="flex-1">Cancel</AnimatedButton>
+                                    <AnimatedButton type="submit" className="flex-1" icon={<FiPlus />}>Create PCB</AnimatedButton>
                                 </div>
                             </form>
                         </div>
@@ -241,55 +228,54 @@ const PCBManagement = () => {
                 {showBOMModal && (
                     <ModalOverlay onClose={() => setShowBOMModal(false)}>
                         <div className="p-6">
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-center mb-5">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">
+                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                                         {selectedPCB ? selectedPCB.pcb_name : 'Loading...'}
                                     </h2>
-                                    <p className="text-gray-500">{selectedPCB?.pcb_code}</p>
+                                    <p className="text-xs text-slate-400">{selectedPCB?.pcb_code} • Bill of Materials</p>
                                 </div>
-                                <button onClick={() => setShowBOMModal(false)}><FiX size={24} /></button>
+                                <button onClick={() => setShowBOMModal(false)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"><FiX /></button>
                             </div>
 
                             {bomLoading ? (
-                                <div className="space-y-4">
-                                    <Skeleton height="40px" />
-                                    <Skeleton height="40px" />
-                                    <Skeleton height="40px" />
+                                <div className="space-y-3">
+                                    <Skeleton height="36px" />
+                                    <Skeleton height="36px" />
+                                    <Skeleton height="36px" />
                                 </div>
                             ) : selectedPCB && selectedPCB.bom && selectedPCB.bom.length > 0 ? (
                                 <div className="overflow-x-auto">
                                     <table className="w-full">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Component</th>
-                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part #</th>
-                                                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Qty / PCB</th>
-                                                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Unit Cost</th>
+                                        <thead>
+                                            <tr className="border-b border-slate-100 dark:border-slate-800">
+                                                {['Component', 'Part #', 'Qty/PCB', 'Unit Cost'].map(h => (
+                                                    <th key={h} className="py-2 px-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">{h}</th>
+                                                ))}
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-200">
+                                        <tbody>
                                             {selectedPCB.bom.map((comp) => (
-                                                <tr key={comp.mapping_id}>
-                                                    <td className="px-4 py-2 text-sm font-medium text-gray-900">{comp.component_name}</td>
-                                                    <td className="px-4 py-2 text-sm text-gray-500">{comp.part_number}</td>
-                                                    <td className="px-4 py-2 text-sm text-gray-900 text-right font-bold">{comp.quantity_per_pcb}</td>
-                                                    <td className="px-4 py-2 text-sm text-gray-500 text-right">${comp.unit_price}</td>
+                                                <tr key={comp.mapping_id} className="border-b border-slate-50 dark:border-slate-800/70">
+                                                    <td className="py-2.5 px-3 text-sm font-semibold text-slate-900 dark:text-white">{comp.component_name}</td>
+                                                    <td className="py-2.5 px-3 text-xs text-slate-400">{comp.part_number}</td>
+                                                    <td className="py-2.5 px-3 text-sm font-bold text-slate-900 dark:text-white">{comp.quantity_per_pcb}</td>
+                                                    <td className="py-2.5 px-3 text-xs text-slate-400">${comp.unit_price}</td>
                                                 </tr>
                                             ))}
-                                            <tr className="bg-gray-50 font-bold">
-                                                <td colSpan="3" className="px-4 py-3 text-right">Total Cost Per PCB:</td>
-                                                <td className="px-4 py-3 text-right text-green-600">${selectedPCB.total_cost_per_pcb}</td>
+                                            <tr className="bg-slate-50 dark:bg-slate-800/50">
+                                                <td colSpan="3" className="py-3 px-3 text-right text-sm font-bold text-slate-700 dark:text-white">Total Cost Per PCB:</td>
+                                                <td className="py-3 px-3 text-sm font-black text-emerald-600 dark:text-emerald-400">${selectedPCB.total_cost_per_pcb}</td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             ) : (
-                                <div className="text-center py-12">
-                                    <div className="bg-gray-100 p-4 rounded-full inline-block mb-3">
-                                        <FiAlertCircle className="w-8 h-8 text-gray-400" />
+                                <div className="text-center py-10">
+                                    <div className="p-3 rounded-full bg-slate-100 dark:bg-slate-800 inline-block mb-3">
+                                        <FiAlertCircle className="w-6 h-6 text-slate-400" />
                                     </div>
-                                    <p className="text-gray-500">No components in this BOM yet.</p>
+                                    <p className="text-sm text-slate-400">No components in this BOM yet.</p>
                                 </div>
                             )}
                         </div>

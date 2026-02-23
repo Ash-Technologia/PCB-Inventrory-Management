@@ -3,25 +3,26 @@ import { motion } from 'framer-motion';
 const GlassCard = ({
     children,
     className = '',
-    hover = true,
-    gradient = false,
-    glass = true,
+    hover = false,
     onClick,
+    noPad = false,
     ...props
 }) => {
     return (
         <motion.div
             onClick={onClick}
             className={`
-        ${glass ? 'glass' : ''} rounded-xl p-6 
-        ${gradient ? 'border-2 border-transparent bg-gradient-to-br from-white/20 to-white/5' : ''}
-        ${hover ? 'hover-lift cursor-pointer' : ''}
-        ${className}
-      `}
-            initial={{ opacity: 0, y: 20 }}
+                bg-white dark:bg-slate-900
+                border border-slate-100 dark:border-slate-800
+                rounded-2xl shadow-card dark:shadow-card-dark
+                transition-all duration-300
+                ${hover ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-slate-900' : ''}
+                ${noPad ? '' : 'p-6'}
+                ${className}
+            `}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            whileHover={hover ? { scale: 1.02 } : {}}
+            transition={{ duration: 0.35 }}
             {...props}
         >
             {children}

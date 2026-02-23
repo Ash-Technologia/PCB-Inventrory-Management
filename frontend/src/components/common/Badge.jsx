@@ -1,43 +1,24 @@
-import { motion } from 'framer-motion';
-
-const Badge = ({
-    children,
-    variant = 'primary',
-    size = 'md',
-    pulse = false,
-    className = ''
-}) => {
-    const variants = {
-        primary: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
-        success: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white',
-        warning: 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white',
-        danger: 'bg-gradient-to-r from-red-500 to-rose-500 text-white',
-        gray: 'bg-gray-200 text-gray-800',
-        info: 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white',
+const Badge = ({ children, color = 'purple', size = 'sm' }) => {
+    const colors = {
+        purple: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+        blue: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+        green: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+        yellow: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+        red: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+        cyan: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+        gray: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400',
     };
 
     const sizes = {
+        xs: 'px-1.5 py-0.5 text-[10px]',
         sm: 'px-2 py-0.5 text-xs',
-        md: 'px-2.5 py-1 text-sm',
-        lg: 'px-3 py-1.5 text-base',
+        md: 'px-3 py-1 text-sm',
     };
 
     return (
-        <motion.span
-            className={`
-        inline-flex items-center justify-center
-        rounded-full font-semibold uppercase tracking-wide
-        ${variants[variant]}
-        ${sizes[size]}
-        ${pulse ? 'animate-pulse-glow' : ''}
-        ${className}
-      `}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.2 }}
-        >
+        <span className={`inline-flex items-center rounded-full font-semibold ${colors[color] || colors.gray} ${sizes[size]}`}>
             {children}
-        </motion.span>
+        </span>
     );
 };
 

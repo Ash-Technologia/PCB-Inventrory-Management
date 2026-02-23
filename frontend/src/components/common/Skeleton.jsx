@@ -1,17 +1,14 @@
-const Skeleton = ({ width = '100%', height = '20px', className = '', circle = false }) => {
-    if (circle) {
-        return (
-            <div
-                className={`skeleton rounded-full ${className}`}
-                style={{ width: height, height }}
-            />
-        );
-    }
-
+const Skeleton = ({ width = '100%', height = '20px', className = '' }) => {
     return (
         <div
-            className={`skeleton ${className}`}
-            style={{ width, height }}
+            className={`rounded-xl ${className}`}
+            style={{
+                width,
+                height,
+                background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s infinite',
+            }}
         />
     );
 };

@@ -1,28 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-import { authService } from '../services';
+import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { FiMail, FiLock, FiUser, FiUserPlus, FiZap, FiShield } from 'react-icons/fi';
+import { FiMail, FiLock, FiUser, FiUserPlus, FiZap, FiShield, FiCheckCircle, FiActivity } from 'react-icons/fi';
 import AnimatedButton from '../components/common/AnimatedButton';
-import GlassCard from '../components/common/GlassCard';
-
-const FloatingParticle = ({ delay }) => (
-    <motion.div
-        className="absolute w-2 h-2 bg-white rounded-full opacity-20"
-        initial={{ y: '100vh', x: Math.random() * window.innerWidth }}
-        animate={{
-            y: '-10vh',
-            x: Math.random() * window.innerWidth,
-        }}
-        transition={{
-            duration: Math.random() * 10 + 10,
-            repeat: Infinity,
-            delay,
-            ease: 'linear',
-        }}
-    />
-);
 
 const Signup = () => {
     const [formData, setFormData] = useState({
@@ -34,6 +16,7 @@ const Signup = () => {
     });
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { register } = useAuth();
 
     const handleChange = (e) => {
         setFormData({
@@ -59,14 +42,17 @@ const Signup = () => {
         setLoading(true);
 
         try {
-            await authService.register(
+            await register(
                 formData.username,
                 formData.email,
                 formData.password,
                 formData.role
             );
-            toast.success('🎉 Account created successfully! Please login.');
-            setTimeout(() => navigate('/login'), 1500);
+            toast.success('🎉 Account created successfully! Welcome to the team.', {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+            setTimeout(() => navigate('/'), 1500);
         } catch (error) {
             toast.error(error.response?.data?.message || 'Registration failed');
         } finally {
@@ -74,219 +60,187 @@ const Signup = () => {
         }
     };
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.2,
-            },
-        },
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 },
-    };
-
     return (
-        <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-            {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-600 to-blue-700">
-                <div className="absolute inset-0 opacity-30">
-                    <div className="absolute top-0 left-0 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-float"></div>
-                    <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-                    <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
-                </div>
+        <div className="min-h-screen w-full flex bg-slate-950 overflow-hidden font-inter">
+            {/* Left Side - Register Hero */}
+            <div className="hidden lg:flex w-1/2 relative flex-col justify-center p-20 overflow-hidden">
+                <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+                <div className="absolute top-0 -right-4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+
+                <motion.div
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="relative z-10"
+                >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 mb-8">
+                        <FiUserPlus className="text-blue-400" />
+                        <span className="text-blue-300 text-sm font-semibold uppercase tracking-wider">Join the Network</span>
+                    </div>
+
+                    <h1 className="text-6xl font-black text-white leading-tight mb-6">
+                        Scale Your <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                            Production Power
+                        </span>
+                    </h1>
+
+                    <p className="text-slate-400 text-xl max-w-lg mb-12 leading-relaxed">
+                        Join hundreds of engineers optimizing their PCB manufacturing workflows with our advanced toolkit.
+                    </p>
+
+                    <div className="space-y-6">
+                        {[
+                            { icon: FiCheckCircle, text: 'Unlimited Component Tracking' },
+                            { icon: FiActivity, text: 'Real-time Production Analytics' },
+                            { icon: FiZap, text: 'Automated Procurement Triggers' },
+                        ].map((item, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.5 + (i * 0.1) }}
+                                className="flex items-center gap-4 text-slate-300"
+                            >
+                                <div className="text-blue-400">
+                                    <item.icon size={20} />
+                                </div>
+                                <span className="font-medium">{item.text}</span>
+                            </motion.div>
+                        ))}
+                    </div>
+                </motion.div>
+
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
             </div>
 
-            {/* Floating particles */}
-            {[...Array(20)].map((_, i) => (
-                <FloatingParticle key={i} delay={i * 0.5} />
-            ))}
+            {/* Right Side - Signup Form */}
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 relative overflow-y-auto custom-scrollbar">
+                <div className="lg:hidden absolute inset-0 bg-mesh-dark opacity-40 -z-10"></div>
 
-            {/* Signup card */}
-            <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] }}
-                className="relative z-10 w-full max-w-md"
-            >
-                <GlassCard className="backdrop-blur-xl bg-white/10 border-white/20 shadow-2xl">
-                    {/* Header */}
-                    <motion.div
-                        className="text-center mb-8"
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="visible"
-                    >
-                        <motion.div variants={itemVariants} className="mb-4 flex justify-center">
-                            <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg shadow-purple-500/50">
-                                <FiUserPlus className="w-8 h-8 text-white" />
-                            </div>
-                        </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-full max-w-md py-12"
+                >
+                    <div className="mb-8 text-center lg:text-left">
+                        <h2 className="text-3xl font-bold text-white mb-3">Create Account</h2>
+                        <p className="text-slate-400">Start your journey with Electrolyte Solutions.</p>
+                    </div>
 
-                        <motion.h1
-                            variants={itemVariants}
-                            className="text-4xl font-bold text-white mb-2 tracking-tight"
-                        >
-                            Create Account
-                        </motion.h1>
-
-                        <motion.p variants={itemVariants} className="text-purple-100">
-                            Join the PCB Inventory System
-                        </motion.p>
-                    </motion.div>
-
-                    {/* Form */}
-                    <motion.form
-                        onSubmit={handleSubmit}
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="visible"
-                        className="space-y-4"
-                    >
-                        <motion.div variants={itemVariants}>
-                            <label className="block text-sm font-semibold text-white mb-2">
-                                Username
-                            </label>
-                            <div className="relative">
-                                <FiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-200" />
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300 ml-1">Username</label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+                                    <FiUser />
+                                </div>
                                 <input
                                     type="text"
                                     name="username"
+                                    required
+                                    className="input-premium pl-12"
+                                    placeholder="yourname"
                                     value={formData.username}
                                     onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all backdrop-blur-sm"
-                                    placeholder="Enter your username"
-                                    required
                                 />
                             </div>
-                        </motion.div>
+                        </div>
 
-                        <motion.div variants={itemVariants}>
-                            <label className="block text-sm font-semibold text-white mb-2">
-                                Email Address
-                            </label>
-                            <div className="relative">
-                                <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-200" />
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300 ml-1">Email Address</label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+                                    <FiMail />
+                                </div>
                                 <input
                                     type="email"
                                     name="email"
+                                    required
+                                    className="input-premium pl-12"
+                                    placeholder="you@company.com"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all backdrop-blur-sm"
-                                    placeholder="your.email@company.com"
-                                    required
                                 />
                             </div>
-                        </motion.div>
+                        </div>
 
-                        <motion.div variants={itemVariants}>
-                            <label className="block text-sm font-semibold text-white mb-2">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-200" />
-                                <input
-                                    type="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all backdrop-blur-sm"
-                                    placeholder="••••••••"
-                                    required
-                                />
-                            </div>
-                        </motion.div>
-
-                        <motion.div variants={itemVariants}>
-                            <label className="block text-sm font-semibold text-white mb-2">
-                                Confirm Password
-                            </label>
-                            <div className="relative">
-                                <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-200" />
-                                <input
-                                    type="password"
-                                    name="confirmPassword"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all backdrop-blur-sm"
-                                    placeholder="••••••••"
-                                    required
-                                />
-                            </div>
-                        </motion.div>
-
-                        <motion.div variants={itemVariants}>
-                            <label className="block text-sm font-semibold text-white mb-2">
-                                Account Type
-                            </label>
-                            <div className="relative">
-                                <FiShield className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-200 z-10" />
-                                <select
-                                    name="role"
-                                    value={formData.role}
-                                    onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all backdrop-blur-sm appearance-none cursor-pointer"
-                                >
-                                    <option value="USER" className="bg-purple-900">User (Standard Access)</option>
-                                    <option value="ADMIN" className="bg-purple-900">Admin (Full Control)</option>
-                                </select>
-                                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-purple-200">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-300 ml-1">Password</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+                                        <FiLock />
+                                    </div>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        required
+                                        className="input-premium pl-12"
+                                        placeholder="••••"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                    />
                                 </div>
                             </div>
-                            <p className="text-xs text-purple-200 mt-1 ml-1">
-                                {formData.role === 'ADMIN' ? '⚠️ Admin has full edit/delete permissions' : 'ℹ️ Standard user can view and create entries'}
-                            </p>
-                        </motion.div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-300 ml-1">Confirm</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+                                        <FiLock />
+                                    </div>
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        required
+                                        className="input-premium pl-12"
+                                        placeholder="••••"
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
-                        <motion.div variants={itemVariants}>
-                            <AnimatedButton
-                                type="submit"
-                                loading={loading}
-                                icon={<FiUserPlus />}
-                                className="w-full py-3 text-lg bg-white text-purple-700 hover:shadow-xl"
-                                variant="secondary"
-                            >
-                                Create Account
-                            </AnimatedButton>
-                        </motion.div>
-                    </motion.form>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300 ml-1">Account Role</label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors z-10">
+                                    <FiShield />
+                                </div>
+                                <select
+                                    name="role"
+                                    className="input-premium pl-12 appearance-none cursor-pointer"
+                                    value={formData.role}
+                                    onChange={handleChange}
+                                >
+                                    <option value="USER" className="bg-slate-900">Standard User</option>
+                                    <option value="ADMIN" className="bg-slate-900">Administrator</option>
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
 
-                    {/* Login link */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.8 }}
-                        className="mt-6 text-center"
-                    >
-                        <p className="text-sm text-purple-100">
-                            Already have an account?{' '}
-                            <Link
-                                to="/login"
-                                className="font-semibold text-white hover:text-purple-200 transition-colors underline"
-                            >
-                                Sign in
-                            </Link>
+                        <AnimatedButton
+                            type="submit"
+                            loading={loading}
+                            className="w-full py-4 text-lg font-bold gradient-primary shadow-glow-purple mt-4"
+                        >
+                            Create Account
+                        </AnimatedButton>
+                    </form>
+
+                    <div className="mt-8 text-center">
+                        <p className="text-slate-500 text-sm">
+                            Already have an account? {' '}
+                            <Link to="/login" className="text-white font-bold hover:underline">Sign in instead</Link>
                         </p>
-                    </motion.div>
-
-                    {/* Footer text */}
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1 }}
-                        className="mt-6 text-center text-xs text-purple-200"
-                    >
-                        Secure authentication powered by JWT
-                    </motion.p>
-                </GlassCard>
-            </motion.div>
+                    </div>
+                </motion.div>
+            </div>
         </div>
     );
 };

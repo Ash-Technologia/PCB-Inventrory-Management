@@ -1,20 +1,29 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import PageTransition from '../common/PageTransition';
+import { motion } from 'framer-motion';
+
+const pageVariants = {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -8 },
+};
 
 const Layout = () => {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-zinc-50 flex">
-            {/* Sidebar */}
+        <div className="min-h-screen flex bg-slate-50 dark:bg-[#03070e] transition-colors duration-300">
             <Sidebar />
-
-            {/* Main Content */}
-            <div className="flex-1 ml-72 min-h-screen">
-                <main className="p-8 max-w-7xl mx-auto">
-                    <PageTransition>
+            <div className="flex-1 ml-64 min-h-screen">
+                <main className="p-6 max-w-[1400px] mx-auto">
+                    <motion.div
+                        variants={pageVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                    >
                         <Outlet />
-                    </PageTransition>
+                    </motion.div>
                 </main>
             </div>
         </div>

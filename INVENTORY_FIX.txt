@@ -1,0 +1,27 @@
+// INVENTORY.JSX FIX - Lines 90-97
+// 
+// PROBLEM: After adding a component, the list doesn't refresh because
+// the useEffect has a condition that prevents fetching when search is empty
+//
+// ORIGINAL CODE (BUGGY):
+/*
+    useEffect(() => {
+        const debounce = setTimeout(() => {
+            if (search || filter !== 'all') {  // <-- BUG: doesn't fetch when search is empty
+                fetchComponents();
+            }
+        }, 300);
+        return () => clearTimeout(debounce);
+    }, [search]);
+*/
+
+// FIXED CODE:
+    useEffect(() => {
+        const debounce = setTimeout(() => {
+            fetchComponents();  // <-- FIXED: always fetch when search changes
+        }, 300);
+        return () => clearTimeout(debounce);
+    }, [search]);
+
+// INSTRUCTIONS:
+// Replace lines 90-97 in frontend/src/pages/Inventory.jsx with the FIXED CODE above

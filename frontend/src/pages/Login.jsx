@@ -1,27 +1,10 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { FiMail, FiLock, FiLogIn, FiZap } from 'react-icons/fi';
+import { FiMail, FiLock, FiLogIn, FiZap, FiCheckCircle, FiShield, FiArrowRight } from 'react-icons/fi';
 import AnimatedButton from '../components/common/AnimatedButton';
 import GlassCard from '../components/common/GlassCard';
-
-const FloatingParticle = ({ delay }) => (
-    <motion.div
-        className="absolute w-2 h-2 bg-white rounded-full opacity-20"
-        initial={{ y: '100vh', x: Math.random() * window.innerWidth }}
-        animate={{
-            y: '-10vh',
-            x: Math.random() * window.innerWidth,
-        }}
-        transition={{
-            duration: Math.random() * 10 + 10,
-            repeat: Infinity,
-            delay,
-            ease: 'linear',
-        }}
-    />
-);
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -35,184 +18,176 @@ const Login = () => {
 
         try {
             await login(email, password);
-            toast.success('🎉 Welcome back!', {
+            toast.success('🎉 Welcome back, Commander!', {
                 position: 'top-right',
                 autoClose: 2000,
             });
         } catch (error) {
             toast.error(error.response?.data?.message || 'Login failed', {
-                position: 'top-right',
+                theme: 'colored'
             });
         } finally {
             setLoading(false);
         }
     };
 
-    // Stagger animation for form elements
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.2,
-            },
-        },
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 },
-    };
-
     return (
-        <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-            {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-600 to-blue-700">
-                <div className="absolute inset-0 opacity-30">
-                    <div className="absolute top-0 left-0 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-float"></div>
-                    <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-                    <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
-                </div>
+        <div className="min-h-screen w-full flex bg-slate-950 overflow-hidden font-inter">
+            {/* Left Side - Creative Hero */}
+            <div className="hidden lg:flex w-1/2 relative flex-col justify-center p-20 overflow-hidden">
+                {/* Animated Background blobs */}
+                <div className="absolute top-0 -left-4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+                <div className="absolute top-0 -right-4 w-96 h-96 bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+
+                <motion.div
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="relative z-10"
+                >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-8">
+                        <FiZap className="text-purple-400" />
+                        <span className="text-purple-300 text-sm font-semibold uppercase tracking-wider">Enterprise Inventory v2.0</span>
+                    </div>
+
+                    <h1 className="text-6xl font-black text-white leading-tight mb-6">
+                        Manage Your <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">
+                            PCB Ecosystem
+                        </span>
+                    </h1>
+
+                    <p className="text-slate-400 text-xl max-w-lg mb-12 leading-relaxed">
+                        Streamline production, track components, and optimize procurement with our AI-driven management suite.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-8">
+                        {[
+                            { icon: FiShield, title: 'Secure', desc: 'JWT & Role-based' },
+                            { icon: FiCheckCircle, title: 'Accurate', desc: 'Real-time tracking' },
+                        ].map((feat, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 + (i * 0.1) }}
+                                className="flex flex-col gap-3"
+                            >
+                                <div className="p-3 w-fit bg-slate-900 border border-slate-800 rounded-xl text-purple-400">
+                                    <feat.icon size={24} />
+                                </div>
+                                <h3 className="text-white font-bold">{feat.title}</h3>
+                                <p className="text-slate-500 text-sm">{feat.desc}</p>
+                            </motion.div>
+                        ))}
+                    </div>
+                </motion.div>
+
+                {/* Decorative mesh */}
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
             </div>
 
-            {/* Floating particles */}
-            {[...Array(20)].map((_, i) => (
-                <FloatingParticle key={i} delay={i * 0.5} />
-            ))}
+            {/* Right Side - Login Form */}
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 relative">
+                {/* Mobile/Tablet Background elements */}
+                <div className="lg:hidden absolute inset-0 bg-mesh-dark opacity-40 -z-10"></div>
 
-            {/* Login card */}
-            <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] }}
-                className="relative z-10 w-full max-w-md"
-            >
-                <GlassCard className="backdrop-blur-xl bg-white/10 border-white/20 shadow-2xl">
-                    {/* Header */}
-                    <motion.div
-                        className="text-center mb-8"
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="visible"
-                    >
-                        <motion.div variants={itemVariants} className="mb-4 flex justify-center">
-                            <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg shadow-purple-500/50">
-                                <FiZap className="w-8 h-8 text-white" />
-                            </div>
-                        </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-full max-w-md"
+                >
+                    <div className="mb-12 text-center lg:text-left">
+                        <h2 className="text-3xl font-bold text-white mb-3">Sign In</h2>
+                        <p className="text-slate-400">Welcome back! Please enter your details.</p>
+                    </div>
 
-                        <motion.h1
-                            variants={itemVariants}
-                            className="text-4xl font-bold text-white mb-2 tracking-tight"
-                        >
-                            PCB Inventory
-                        </motion.h1>
-
-                        <motion.p variants={itemVariants} className="text-purple-100">
-                            INVICTUS Hackathon - Electrolyte Solutions
-                        </motion.p>
-                    </motion.div>
-
-                    {/* Form */}
-                    <motion.form
-                        onSubmit={handleSubmit}
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="visible"
-                        className="space-y-5"
-                    >
-                        <motion.div variants={itemVariants}>
-                            <label className="block text-sm font-semibold text-white mb-2">
-                                Email Address
-                            </label>
-                            <div className="relative">
-                                <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-200" />
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300 ml-1">Email Address</label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-purple-400 transition-colors">
+                                    <FiMail />
+                                </div>
                                 <input
                                     type="email"
+                                    required
+                                    className="input-premium pl-12"
+                                    placeholder="admin@electrolyte.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all backdrop-blur-sm"
-                                    placeholder="admin@electrolyte.com"
-                                    required
                                 />
                             </div>
-                        </motion.div>
+                        </div>
 
-                        <motion.div variants={itemVariants}>
-                            <label className="block text-sm font-semibold text-white mb-2">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-200" />
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between px-1">
+                                <label className="text-sm font-medium text-slate-300">Password</label>
+                                <a href="#" className="text-sm font-semibold text-purple-400 hover:text-purple-300 transition-colors">Forgot password?</a>
+                            </div>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-purple-400 transition-colors">
+                                    <FiLock />
+                                </div>
                                 <input
                                     type="password"
+                                    required
+                                    className="input-premium pl-12"
+                                    placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all backdrop-blur-sm"
-                                    placeholder="••••••••"
-                                    required
                                 />
                             </div>
-                        </motion.div>
+                        </div>
 
-                        <motion.div variants={itemVariants}>
-                            <AnimatedButton
-                                type="submit"
-                                loading={loading}
-                                icon={<FiLogIn />}
-                                className="w-full py-3 text-lg bg-white text-purple-700 hover:shadow-xl"
-                                variant="secondary"
-                            >
-                                Sign In
-                            </AnimatedButton>
-                        </motion.div>
-                    </motion.form>
+                        <div className="flex items-center gap-2 px-1">
+                            <input type="checkbox" id="remember" className="rounded border-slate-700 bg-slate-800 text-purple-600 focus:ring-purple-500 focus:ring-offset-slate-900" />
+                            <label htmlFor="remember" className="text-sm text-slate-400 select-none">Remember for 30 days</label>
+                        </div>
 
-                    {/* Demo credentials */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.8 }}
-                        className="mt-6 p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl"
-                    >
-                        <p className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                            <FiZap className="w-4 h-4" />
-                            Demo Credentials
+                        <AnimatedButton
+                            type="submit"
+                            loading={loading}
+                            className="w-full py-4 text-lg font-bold gradient-purple shadow-glow-purple"
+                        >
+                            Sign In
+                        </AnimatedButton>
+                    </form>
+
+                    {/* Social/Demo footer */}
+                    <div className="mt-8 pt-8 border-t border-slate-800 space-y-6">
+                        <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <FiZap className="text-yellow-500" /> Demo Credentials
+                            </h4>
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm text-slate-300">admin@electrolyte.com</p>
+                                    <p className="text-xs text-slate-500">Pass: admin123</p>
+                                </div>
+                                <button
+                                    onClick={() => { setEmail('admin@electrolyte.com'); setPassword('admin123'); }}
+                                    className="text-xs font-bold text-slate-400 hover:text-white transition-colors flex items-center gap-1"
+                                >
+                                    Auto-fill <FiArrowRight />
+                                </button>
+                            </div>
+                        </div>
+
+                        <p className="text-center text-slate-500 text-sm">
+                            Don't have an account? {' '}
+                            <a href="/signup" className="text-white font-bold hover:underline">Get started for free</a>
                         </p>
-                        <p className="text-xs text-purple-100">Email: admin@electrolyte.com</p>
-                        <p className="text-xs text-purple-100">Password: admin123</p>
-                    </motion.div>
+                    </div>
+                </motion.div>
 
-                    {/* Signup link */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.9 }}
-                        className="mt-4 text-center"
-                    >
-                        <p className="text-sm text-purple-100">
-                            Don't have an account?{' '}
-                            <a
-                                href="/signup"
-                                className="font-semibold text-white hover:text-purple-200 transition-colors underline"
-                            >
-                                Sign up
-                            </a>
-                        </p>
-                    </motion.div>
-
-                    {/* Footer text */}
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1 }}
-                        className="mt-6 text-center text-xs text-purple-200"
-                    >
-                        Secure authentication powered by JWT
-                    </motion.p>
-                </GlassCard>
-            </motion.div>
+                {/* Footer copyright */}
+                <div className="absolute bottom-6 text-slate-600 text-xs">
+                    © 2026 Electrolyte Solutions. All rights reserved.
+                </div>
+            </div>
         </div>
     );
 };
